@@ -1,0 +1,23 @@
+Power the Components:
+Connect the 5V and GND pins of the RTC module, LED matrix, ultrasonic sensor, and buzzer to the Arduino's 5V and GND pins. A breadboard can share the 5V and GND power rails between the components.
+Connect the DS3231 RTC:
+Connect SDA on the RTC module to A4 on the Arduino.
+
+Connect SCL on the RTC module to A5 on the Arduino.
+
+Connect the LED Matrix:
+Connect DIN (DataIn) to Pin 12 on the Arduino.
+
+Connect CS to Pin 10 on the Arduino.
+
+Connect CLK to Pin 11 on the Arduino.
+
+Connect the Ultrasonic Sensor:
+Connect Trig to Pin 6 on the Arduino.
+
+Connect Echo to Pin 7 on the Arduino.
+
+Connect the Buzzer:
+Connect the positive pin of the buzzer to Pin 5 on the Arduino.
+
+Connect the negative pin of the buzzer to GND.
