@@ -1,0 +1,132 @@
+#include <Wire.h>
+#include <RTClib.h>
+#include "LedControl.h"
+
+// Ultrasonic Sensor Pins
+const int trigPin = 6; // Trig pin of ultrasonic sensor
+const int echoPin = 7; // Echo pin of ultrasonic sensor
+
+// Buzzer pin
+const int buzzerPin = 5; // Connect the active buzzer to pin D5
+
+// LED Matrix Setup (DataIn, CLK, CS, Number of Devices)
+LedControl lc = LedControl(12, 10, 11, 4); // (DIN, CLK, CS, numDevices)
+RTC_DS3231 rtc;
+bool buzzerActive = false; // Track if the buzzer is currently active
+bool buzzerTriggeredToday = false; // Track if the buzzer was triggered today
+
+// Refined digit patterns for numbers 0-9
+byte numbers[10][8] = {
+{B00111100, B01100110, B01100110, B01100110, B01100110, B01100110, B00111100, B00000000}, // 0
+{B00011100, B00111100, B00011100, B00011100, B00011100, B00011100, B01111110, B00000000}, // 1
+{B00111100, B01100110, B01100110, B00001100, B00011000, B00110000, B01111110, B00000000}, // 2
+{B00111100, B01100110, B00000110, B00011100, B00000110, B01100110, B00111100, B00000000}, // 3
+{B00001110, B00011110, B00110110, B01100110, B01111110, B00000110, B00000110, B00000000}, // 4
+{B01111110, B01100000, B01111100, B00000110, B00000110, B01100110, B00111100, B00000000}, // 5
+{B00111100, B01100110, B01100000, B01111100, B01100110, B01100110, B00111100, B00000000}, // 6
+{B01111110, B01100110, B00001100, B00011000, B00110000, B00110000, B00110000, B00000000}, // 7
+{B00111100, B01100110, B01100110, B00111100, B01100110, B01100110, B00111100, B00000000}, // 8
+{B00111100, B01100110, B01100110, B00111110, B00000110, B00001100, B00111000, B00000000} // 9
+};
+
+void setup() {
+Serial.begin(9600);
+pinMode(trigPin, OUTPUT);
+pinMode(echoPin, INPUT);
+pinMode(buzzerPin, OUTPUT);
+
+// Initialize RTC
+if (!rtc.begin()) {
+Serial.println("Couldn't find RTC");
+while (1);
+}
+
+if (rtc.lostPower()) {
+rtc.adjust(DateTime(F(DATE), F(TIME))); // Set RTC to compile time
+}
+
+// Initialize LED Matrix
+for (int i = 0; i < 4; i++) {
+lc.shutdown(i, false); // Wake up displays
+lc.setIntensity(i,1); // Set brightness to medium
+lc.clearDisplay(i); // Clear display
+}
+}
+
+// Function to display a digit on the matrix
+void displayDigit(int digit, int device) {
+lc.clearDisplay(device); // Ensure each device is cleared before displaying the digit
+
+for (int row = 0; row < 8; row++) {
+lc.setRow(device, row, numbers[digit][row]);
+}
+}
+
+// Function to display time (HH:MM) on the LED matrix
+void displayTimeOnMatrix(int hour, int minute) {
+// Split time into digits
+int hourTens = hour / 10;
+int hourOnes = hour % 10;
+int minuteTens = minute / 10;
+int minuteOnes = minute % 10;
+
+// Display each digit on its respective matrix
+displayDigit(hourTens, 0);
+displayDigit(hourOnes, 1);
+displayDigit(minuteTens, 2);
+displayDigit(minuteOnes, 3);
+}
+
+// Function to measure distance using the ultrasonic sensor
+long measureDistance() {
+digitalWrite(trigPin, LOW);
+delayMicroseconds(2);
+digitalWrite(trigPin, HIGH);
+delayMicroseconds(10);
+digitalWrite(trigPin, LOW);
+
+long duration = pulseIn(echoPin, HIGH);
+long distance = duration * 0.034 / 2;
+return distance;
+}
+
+void loop() {
+DateTime now = rtc.now();
+Serial.print("Current Time: ");
+Serial.print(now.hour());
+Serial.print(":");
+Serial.println(now.minute());
+
+// Display the current time on the LED matrix
+displayTimeOnMatrix(now.hour(), now.minute());
+
+// Reset the buzzerTriggeredToday flag at midnight (00:00) to allow buzzer to trigger the next day
+if (now.hour() == 0 && now.minute() == 0) {
+buzzerTriggeredToday = false; // Reset for the new day
+Serial.println("New day, buzzer can be triggered again.");
+}
+
+// Trigger the buzzer at exactly 22:03 if it hasn't been triggered today
+if (now.hour() == 10 && now.minute() == 30 && !buzzerTriggeredToday) {
+digitalWrite(buzzerPin, HIGH); // Turn on the buzzer
+buzzerActive = true; // Set buzzer state to active
+buzzerTriggeredToday = true; // Record that the buzzer was triggered today
+Serial.println("Buzzer is ON at 22:03!");
+}
+
+// If the buzzer is active, check for the ultrasonic sensor to stop it
+if (buzzerActive) {
+long distance = measureDistance();
+Serial.print("Distance: ");
+Serial.println(distance);
+
+// If distance is less than or equal to 4 cm, stop the buzzer
+if (distance < 4) {
+  digitalWrite(buzzerPin, LOW);  // Turn off the buzzer
+  buzzerActive = false;          // Set buzzer state to inactive
+  Serial.println("Buzzer stopped by ultrasonic sensor.");
+}
+}
+
+delay(1000); // Update every second
+}
