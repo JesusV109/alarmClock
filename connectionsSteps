@@ -1,0 +1,39 @@
+DS3231 RTC Module to Arduino
+The DS3231 RTC communicates with the Arduino via the I2C protocol, requiring only two communication pins (SDA and SCL).
+VCC → 5V on Arduino
+
+GND → GND on Arduino
+
+SDA → A4 on Arduino
+
+SCL → A5 on Arduino
+
+LED Matrix to Arduino
+We are using a 4-unit LED matrix, and it communicates using SPI protocol, which requires three main communication pins: DataIn, CLK (Clock), and CS (Chip Select).
+VCC → 5V
+
+GND → GND
+
+DIN → Pin 12
+
+CS → Pin 10
+
+CLK → Pin 11
+
+Ultrasonic Sensor (HC-SR04) to Arduino
+The HC-SR04 ultrasonic sensor uses two pins: one to trigger the ultrasonic pulse and another to receive the echo from the pulse.
+VCC → 5V
+GND → GND
+Trig → Pin 6
+Echo → Pin 7
+
+Buzzer to Arduino
+The active buzzer is connected to a digital pin on the Arduino. The pin will control the buzzer's on/off state.
+Positive ( + ) → Pin 5
+
+Additional Tips:
+Make sure to use a breadboard to properly connect the power lines (5V and GND) to multiple components.
+After wiring, double-check that all components are receiving the correct voltage and are grounded properly.
+You can use jumper wires to make the connections easier, and ensure each connection is secure to avoid intermittent issues.
+
+Negative ( - ) → GND
